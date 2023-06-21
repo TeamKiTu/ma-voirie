@@ -44,28 +44,28 @@
             <% else %>
               <%= @report.user.nickname %>
             <% end %>
-            , le <%= @report.created_at.strftime("%d/%m/%Y") %>
+              , le <%= @report.created_at.strftime("%d/%m/%Y") %>
           </p>
-            <hr><hr>
+          <hr><hr>
           <p class="text-white mt-4"><%= @report.content %></p>
           <section class="flex justify-between items-center pt-18 text-white">
             <figure class="flex align-baseline items-center">
               <% if already_exist?(@report) == false %>
                 <%= button_to report_report_likes_path(@report.id), data: { turbo: "false" }, remote: true, method: :post, class:"flex justify-between items-center" do %>
                   <i class="fa-solid fa-thumbs-up pr-1"></i>
-                    <p class="pr-1">
-                      J'aime
-                    </p>
-                    <%= @report.report_likes.count %>
+                  <p class="pr-1">
+                    J'aime
+                  </p>
+                  <%= @report.report_likes.count %>
                 <% end %>
               <% else %>
                 <%= button_to report_report_like_path(report_id: @report.id, id: current_user.id), data: { turbo: "false" }, method: :delete, class:"flex justify-between items-center" do %>
                   <i class="fa-solid fa-thumbs-up fa-rotate-180 pl-1"></i>
-                    <%= @report.report_likes.count %>
+                  <%= @report.report_likes.count %>
                 <% end %>
               <% end %>
               <i class="fa-solid fa-comment-dots pl-6 pr-1"></i>
-                <%= @report.comments.count %>
+              <%= @report.comments.count %>
             </figure>
             <%= button_to root_path, class: "relative inline-flex items-center justify-center p-8 px-10 py-4 overflow-hidden font-medium text-white transition duration-300 ease-out border-2 border-white rounded-full shadow-md group", method: :get do %>
               <span class="absolute inset-0 flex items-center justify-center w-full h-full text-orange-400 duration-300 -translate-x-full bg-white group-hover:translate-x-0 ease">
