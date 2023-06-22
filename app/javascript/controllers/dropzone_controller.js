@@ -47,6 +47,8 @@ export default class extends Controller {
 
   bindEvents() {
     this.dropZone.on("addedfile", (file) => {
+      const token = this.inputTarget.getAttribute("data-direct-upload-token")
+      const attachmentName = this.inputTarget.getAttribute("data-direct-upload-attachment-name")
       setTimeout(() => { file.accepted && createDirectUploadController(this, file).start() }, 500)
     })
 
