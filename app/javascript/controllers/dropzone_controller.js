@@ -1,33 +1,13 @@
 import { Controller } from "@hotwired/stimulus"
 import Dropzone from 'dropzone';
 import { DirectUpload } from "@rails/activestorage";
+import {
+  getMetaValue,
+  findElement,
+  removeElement,
+  insertAfter,
+} from "../helpers/dropzone";
 
-// Get MetaValue, findElement, removeElement, insertAfter function
-
-export function getMetaValue(name) {
-  const element = findElement(document.head, `meta[name="${name}"]`)
-  if (element) {
-    return element.getAttribute("content")
-  }
-}
-
-export function findElement(root, selector) {
-  if (typeof root == "string") {
-    selector = root
-    root = document
-  }
-  return root.querySelector(selector)
-}
-
-export function removeElement(el) {
-  if (el && el.parentNode) {
-    el.parentNode.removeChild(el);
-  }
-}
-
-export function insertAfter(el, referenceNode) {
-    return referenceNode.parentNode.insertBefore(el, referenceNode.nextSibling);
-}
 
 // Connects to data-controller="dropzone"
 export default class extends Controller {
@@ -47,8 +27,12 @@ export default class extends Controller {
 
   bindEvents() {
     this.dropZone.on("addedfile", (file) => {
-      setTimeout(() => { file.accepted && createDirectUploadController(this, file).start() }, 500)
-    })
+      setTimeout(() => {
+        if (file.accepted) {
+          createDirectUploadController(this, file); // no start here
+        }
+      }, 500)
+    });
 
     this.dropZone.on("removedfile", (file) => {
       file.controller && removeElement(file.controller.hiddenInput)
@@ -107,22 +91,43 @@ export default class extends Controller {
 
 class DirectUploadController {
   constructor(source, file) {
-    this.directUpload = createDirectUpload(file, source.url, this)
+    //this.directUpload = createDirectUpload(file, source.url, this)
     this.source = source
     this.file = file
   }
 
   start() {
-    this.file.controller = this
-    this.hiddenInput = this.createHiddenInput()
-    this.directUpload.create((error, attributes) => {
-      if (error) {
-        removeElement(this.hiddenInput)
-        this.emitDropzoneError(error)
-      } else {
-        this.hiddenInput.value = attributes.signed_id
-        this.emitDropzoneSuccess()
+    this.file.controller = this;
+    this.hiddenInput = this.createHiddenInput();
+  
+    // Fetch the direct upload URL from the server
+    fetch("/reports/direct_upload", {
+      method: "POST",
+      body: JSON.stringify({
+        blob: {
+          filename: this.file.name,
+          content_type: this.file.type
+        }
+      }),
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "X-CSRF-Token": getMetaValue("csrf-token")
       }
+    })
+    .then(response => response.json())
+    .then(data => {
+      // Create a new DirectUpload with the fetched URL and start the upload
+      this.directUpload = createDirectUpload(this.file, data.direct_upload.url, this)
+      this.directUpload.create((error, attributes) => {
+        if (error) {
+          removeElement(this.hiddenInput)
+          this.emitDropzoneError(error)
+        } else {
+          this.hiddenInput.value = attributes.signed_id
+          this.emitDropzoneSuccess()
+        }
+      })
     })
   }
 
@@ -169,7 +174,9 @@ class DirectUploadController {
 }
 
 function createDirectUploadController(source, file) {
-  return new DirectUploadController(source, file)
+  const controller = new DirectUploadController(source, file);
+  controller.start(); // start here
+  return controller;
 }
 
 function createDirectUpload(file, url, controller) {
