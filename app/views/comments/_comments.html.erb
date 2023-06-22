@@ -8,9 +8,14 @@
         <%= comment.content %>
       </p>
       <% if current_user %>
-        <button id = "reply_show" class = "text-white cstm-bg-action cstm-light font-bold py-2 px-4 rounded-xl mr-10">
-          Répondre
-        </button>
+        <div class="flex">
+          <button id = "reply_show" class = "text-white cstm-bg-action cstm-light font-bold py-2 px-4 rounded-xl mr-10">
+            Répondre
+          </button>
+          <% if current_user.is_admin? %>
+            <%= button_to 'Supprimer', report_comment_path(comment.report, comment), method: :delete, data: { confirm: 'Êtes-vous sûr?' }, class: '"text-white cstm-bg-action cstm-light font-bold py-2 px-4 rounded-xl mr-10' %>
+          <% end %>
+        </div>
         <div class = "hidden" id = "reply_div">
           <%= form_with(url:replies_path(comment_id: comment), remote: true, data:{turbo_frame: "comments"}, class: "mt-4") do |form| %>
             <div class="flex">

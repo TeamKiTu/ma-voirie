@@ -13,6 +13,14 @@ class CommentsController < ApplicationController
     end
   end
   
+  def destroy
+    @comment = Comment.find(params[:id])
+    @report = @comment.report
+    @comment.destroy
+    redirect_to @report, notice: 'Commentaire effacé.'
+  end
+  
+  
   private
   
   def comment_params
